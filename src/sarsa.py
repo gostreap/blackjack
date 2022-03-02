@@ -21,6 +21,7 @@ class Sarsa(BaseLearning):
                 self.count[observation_int][action] += 1
                 alpha = 1 / self.count[observation_int][action]
 
+                # print(self.Q.shape, observation, next_action)
                 self.Q[observation_int][action] = (1 - alpha) * self.Q[observation_int][action] + alpha * (
                     reward + self.gamma * self.Q[next_observation_int][next_action]
                 )
@@ -30,6 +31,6 @@ class Sarsa(BaseLearning):
 
 
 if __name__ == "__main__":
-    qlearning = Sarsa()
-    qlearning.train(500000)
+    qlearning = Sarsa("doubledown")
+    qlearning.train(20000)
     qlearning.test(20000)
