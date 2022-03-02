@@ -15,14 +15,12 @@ class Sarsa(BaseLearning):
                 next_observation, reward, done, info = self.env.step(action)
                 next_action = self.epsilon_greedy_policy(next_observation)
 
-                observation_int = self.get_observation_int(observation)
-                next_observation_int = self.get_observation_int(observation)
+                self.count[observation][action] += 1
+                alpha = 1 / self.count[observation][action]
 
-                self.count[observation_int][action] += 1
-                alpha = 1 / self.count[observation_int][action]
-
-                self.Q[observation_int][action] = (1 - alpha) * self.Q[observation_int][action] + alpha * (
-                    reward + self.gamma * self.Q[next_observation_int][next_action]
+                # print(self.Q.shape, observation, next_action)
+                self.Q[observation][action] = (1 - alpha) * self.Q[observation][action] + alpha * (
+                    reward + self.gamma * self.Q[next_observation][next_action]
                 )
                 observation = next_observation
 
@@ -30,6 +28,6 @@ class Sarsa(BaseLearning):
 
 
 if __name__ == "__main__":
-    qlearning = Sarsa()
+    qlearning = Sarsa("v1")
     qlearning.train(300000)
     qlearning.test(20000)

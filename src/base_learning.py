@@ -2,25 +2,37 @@ import random
 
 import gym
 import numpy as np
+from env_v1 import BlackjackEnv
+
+from env_v2 import BlackjackDoubleDownEnv
 
 
 class BaseLearning:
-    def __init__(self, epsilon=0.1, gamma=0.5) -> None:
-        self.env = gym.make("Blackjack-v1")
+    def __init__(self, env, epsilon=0.1, gamma=0.5) -> None:
+        if env == "v1":
+            self.env = BlackjackEnv()
+            self.Q = np.zeros(
+                (
+                    self.env.observation_space[0].n,
+                    self.env.observation_space[1].n,
+                    self.env.observation_space[2].n,
+                    self.env.action_space.n,
+                )
+            )
+        elif env == "v2":
+            self.env = BlackjackDoubleDownEnv()
+            self.Q = np.zeros(
+                (
+                    self.env.observation_space[0].n,
+                    self.env.observation_space[1].n,
+                    self.env.observation_space[2].n,
+                    self.env.observation_space[3].n,
+                    self.env.action_space.n,
+                )
+            )
         self.gamma = gamma
         self.epsilon = epsilon
-        self.Q = np.zeros(
-            (
-                self.env.observation_space[0].n,
-                self.env.observation_space[1].n,
-                self.env.observation_space[2].n,
-                self.env.action_space.n,
-            )
-        )
         self.count = self.Q.copy()
-
-    def get_observation_int(self, observation):
-        return observation[0], observation[1], 1 if observation[2] else 0
 
     def epsilon_greedy_policy(self, observation):
         # exploration
@@ -31,22 +43,16 @@ class BaseLearning:
             return self.greedy_policy(observation)
 
     def greedy_policy(self, observation):
-        hit = self.Q[self.get_observation_int(observation)][1]
-        stick = self.Q[self.get_observation_int(observation)][0]
-
-        if hit > stick:
-            return 1
-        elif stick > hit:
-            return 0
-        else:
-            return self.env.action_space.sample()
+        return np.argmax(self.Q[observation])
 
     def train(self, n_episode):
         pass
 
     def test(self, n_episode):
         win, draw, loss = 0, 0, 0
+        total_reward = 0
         observation = self.env.reset()
+
         for _ in range(n_episode):
             done = False
             reward = 0
@@ -54,6 +60,8 @@ class BaseLearning:
                 action = self.greedy_policy(observation)
                 next_observation, reward, done, info = self.env.step(action)
                 observation = next_observation
+
+            total_reward += reward
 
             if reward == 0:
                 draw += 1
@@ -64,4 +72,5 @@ class BaseLearning:
 
             observation = self.env.reset()
 
-        print("win : {} | draw : {} | loss : {}".format(win/ n_episode, draw / n_episode, loss / n_episode))
+        print("win: {} | draw: {} | loss: {}".format(win/ n_episode, draw / n_episode, loss / n_episode))
+        print("mean reward: {}".format(total_reward / n_episode))
