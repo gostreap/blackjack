@@ -4,8 +4,7 @@ import random
 
 
 class QLearning:
-    def __init__(self, epsilon=0.1, gamma=0.8, alpha=0.1) -> None:
-        self.alpha = alpha
+    def __init__(self, epsilon=0.1, gamma=0.5) -> None:
         self.gamma = gamma
         self.epsilon = epsilon
         self.env = gym.make("Blackjack-v1")
@@ -17,6 +16,7 @@ class QLearning:
                 self.env.action_space.n
             )
         )
+        self.count = self.Q.copy()
 
     def get_observation_int(self, observation):
         return observation[0], observation[1], 1 if observation[2] else 0
@@ -49,15 +49,24 @@ class QLearning:
         for i in range(n_episode):
             if i % 10000 == 0:
                 print(i)
+                # print(np.sum(self.Q))
             done = False
             while not done:
                 action = self.epsilon_greedy_policy(observation)
                 next_observation, reward, done, info = self.env.step(action)
-
-                maxvalue = max(self.Q[self.get_observation_int(observation)][0], self.Q[self.get_observation_int(observation)][1])
-                self.Q[self.get_observation_int(observation)][action] = (1 - self.alpha) * self.Q[self.get_observation_int(observation)][action] + self.alpha * (reward + self.gamma * maxvalue)
                 
-                # print(observation, action, self.Q[self.get_observation_int(observation)][action])
+                observation_int = self.get_observation_int(observation)
+                next_observation_int = self.get_observation_int(observation)
+                
+                
+                self.count[observation_int][action] += 1 
+                alpha = 1/self.count[observation_int][action]
+
+                maxvalue = max(self.Q[next_observation_int][0], self.Q[next_observation_int][1])
+                self.Q[observation_int][action] = (1 - alpha) * self.Q[observation_int][action] + alpha * (reward + self.gamma * maxvalue)
+                # self.Q[observation_int][action] = 1
+                # print(self.Q[observation_int][action])               
+                # print(observation, action, self.Q[observation_int][action])
                 # print(self.Q)
                 observation = next_observation
 
@@ -67,15 +76,18 @@ class QLearning:
     def test(self, n_episode):
         # Test
         win, draw, loss= 0, 0, 0
+        count_hit, count_stick = 0, 0
         observation = self.env.reset()
         for _ in range(n_episode):
             done = False
             reward = 0
             while not done:
                 action = self.greedy_policy(observation, debug=True)
+                # action = 0
                 # action = self.env.action_space.sample()
+                print("action", observation, action)
                 next_observation, reward, done, info = self.env.step(action)
-                print(next_observation, reward)
+                # print(next_observation, reward)
 
                 observation = next_observation
 
@@ -90,8 +102,21 @@ class QLearning:
             
         print(win/ n_episode, draw/n_episode, loss/n_episode)
 
+def printQ(Q):
+    for i in range(len(Q)):
+        print(i, np.sum(Q[i]))
+        # for j in range(len(Q[i])):
+        #     for k in range(len(Q[i, j])):
+        #         for l in range(len(Q[i, j, k])):
+        #             print(Q[i, j, k, l])
+
+
 if __name__ == "__main__":
     qlearning = QLearning()
     qlearning.train(100000)
     qlearning.test(1000)
-    print(qlearning.Q)
+    print(20, qlearning.Q[20])
+    # print(np.sum(qlearning.Q))
+    # printQ(qlearning.Q)
+
+
