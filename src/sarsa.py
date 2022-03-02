@@ -31,5 +31,5 @@ class Sarsa(BaseLearning):
 
 if __name__ == "__main__":
     qlearning = Sarsa()
-    qlearning.train(300000)
+    qlearning.train(500000)
     qlearning.test(20000)

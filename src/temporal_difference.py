@@ -26,5 +26,5 @@ class TemporalDifference(BaseLearning):
 
 if __name__ == "__main__":
     qlearning = TemporalDifference()
-    qlearning.train(300000)
+    qlearning.train(20000)
     qlearning.test(20000)
