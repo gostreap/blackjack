@@ -29,9 +29,12 @@ class QLearning:
         else:
             return self.greedy_policy(observation)
 
-    def greedy_policy(self, observation):
+    def greedy_policy(self, observation, debug=False):
         hit = self.Q[self.get_observation_int(observation)][1]
         stick = self.Q[self.get_observation_int(observation)][0]
+
+        if debug:
+            print(hit, stick)
 
         if hit > stick:
             return 0
@@ -44,7 +47,8 @@ class QLearning:
         # Training
         observation = self.env.reset()
         for i in range(n_episode):
-            print(i)
+            if i % 10000 == 0:
+                print(i)
             done = False
             while not done:
                 action = self.epsilon_greedy_policy(observation)
@@ -53,8 +57,8 @@ class QLearning:
                 maxvalue = max(self.Q[self.get_observation_int(observation)][0], self.Q[self.get_observation_int(observation)][1])
                 self.Q[self.get_observation_int(observation)][action] = (1 - self.alpha) * self.Q[self.get_observation_int(observation)][action] + self.alpha * (reward + self.gamma * maxvalue)
                 
-                print(observation, action, self.Q[self.get_observation_int(observation)][action])
-
+                # print(observation, action, self.Q[self.get_observation_int(observation)][action])
+                # print(self.Q)
                 observation = next_observation
 
             observation = self.env.reset()
@@ -68,7 +72,7 @@ class QLearning:
             done = False
             reward = 0
             while not done:
-                action = self.greedy_policy(observation)
+                action = self.greedy_policy(observation, debug=True)
                 # action = self.env.action_space.sample()
                 next_observation, reward, done, info = self.env.step(action)
                 print(next_observation, reward)
@@ -86,11 +90,8 @@ class QLearning:
             
         print(win/ n_episode, draw/n_episode, loss/n_episode)
 
-
-
-
 if __name__ == "__main__":
     qlearning = QLearning()
-    qlearning.train(10000)
+    qlearning.train(100000)
     qlearning.test(1000)
-    print(qlearning.Q[(0, 0, 0)][0])
+    print(qlearning.Q)
