@@ -14,14 +14,11 @@ class QLearning(BaseLearning):
                 action = self.epsilon_greedy_policy(observation)
                 next_observation, reward, done, info = self.env.step(action)
 
-                observation_int = self.get_observation_int(observation)
-                next_observation_int = self.get_observation_int(observation)
+                self.count[observation][action] += 1
+                alpha = 1 / self.count[observation][action]
 
-                self.count[observation_int][action] += 1
-                alpha = 1 / self.count[observation_int][action]
-
-                maxvalue = max(self.Q[next_observation_int][0], self.Q[next_observation_int][1])
-                self.Q[observation_int][action] = (1 - alpha) * self.Q[observation_int][action] + alpha * (
+                maxvalue = max(self.Q[next_observation][0], self.Q[next_observation][1])
+                self.Q[observation][action] = (1 - alpha) * self.Q[observation][action] + alpha * (
                     reward + self.gamma * maxvalue
                 )
                 observation = next_observation

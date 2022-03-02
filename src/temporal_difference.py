@@ -14,17 +14,15 @@ class TemporalDifference(BaseLearning):
                 action = self.epsilon_greedy_policy(observation)
                 next_observation, reward, done, info = self.env.step(action)
 
-                observation_int = self.get_observation_int(observation)
+                self.count[observation][action] += 1
+                alpha = 1 / self.count[observation][action]
 
-                self.count[observation_int][action] += 1
-                alpha = 1 / self.count[observation_int][action]
-
-                self.Q[observation_int][action] += alpha * (reward - self.Q[observation_int][action])
+                self.Q[observation][action] += alpha * (reward - self.Q[observation][action])
                 observation = next_observation
 
             observation = self.env.reset()
 
 if __name__ == "__main__":
-    qlearning = TemporalDifference("v1")
+    qlearning = TemporalDifference("v2")
     qlearning.train(20000)
     qlearning.test(20000)

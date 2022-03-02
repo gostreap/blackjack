@@ -34,12 +34,6 @@ class BaseLearning:
         self.epsilon = epsilon
         self.count = self.Q.copy()
 
-    def get_observation_int(self, observation):
-        if len(observation) == 3: # env = "v1"
-            return observation[0], observation[1], 1 if observation[2] else 0
-        elif len(observation) == 4:
-            return observation[0], observation[1], 1 if observation[2] else 0, 1 if observation[3] else 0
-
     def epsilon_greedy_policy(self, observation):
         # exploration
         if random.random() < self.epsilon:
@@ -49,16 +43,7 @@ class BaseLearning:
             return self.greedy_policy(observation)
 
     def greedy_policy(self, observation):
-        return np.argmax(self.Q[self.get_observation_int(observation)])
-        hit = self.Q[self.get_observation_int(observation)][1]
-        stick = self.Q[self.get_observation_int(observation)][0]
-
-        if hit > stick:
-            return 1
-        elif stick > hit:
-            return 0
-        else:
-            return self.env.action_space.sample()
+        return np.argmax(self.Q[observation])
 
     def train(self, n_episode):
         pass
