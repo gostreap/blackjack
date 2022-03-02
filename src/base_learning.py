@@ -2,14 +2,15 @@ import random
 
 import gym
 import numpy as np
+from env_v1 import BlackjackEnv
 
-from env_doubledown import BlackjackDoubleDownEnv
+from env_v2 import BlackjackDoubleDownEnv
 
 
 class BaseLearning:
     def __init__(self, env, epsilon=0.1, gamma=0.5) -> None:
         if env == "v1":
-            self.env = gym.make("Blackjack-v1")
+            self.env = BlackjackEnv()
             self.Q = np.zeros(
                 (
                     self.env.observation_space[0].n,
@@ -18,7 +19,7 @@ class BaseLearning:
                     self.env.action_space.n,
                 )
             )
-        elif env == "doubledown":
+        elif env == "v2":
             self.env = BlackjackDoubleDownEnv()
             self.Q = np.zeros(
                 (
