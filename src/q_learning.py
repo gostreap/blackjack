@@ -27,6 +27,15 @@ class QLearning(BaseLearning):
 
 
 if __name__ == "__main__":
-    model = QLearning("v3", epsilon=0.05, gamma=0.2)
-    model.train(500000)
-    model.test(20000)
+    for env in ["v1", "v2", "v3"]:
+        print("##### {} #####".format(env))
+        model = QLearning(env, epsilon=0.05, gamma=0.2)
+        model.train(100000)
+        model.test(20000)
+
+        num_state = 1
+        for dim in model.env.observation_space:
+            num_state *= dim.n 
+        print("Number of state: {}".format(num_state))
+        print("Number of action: {}".format(model.env.action_space.n))
+
