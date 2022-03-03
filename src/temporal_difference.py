@@ -23,6 +23,6 @@ class TemporalDifference(BaseLearning):
             observation = self.env.reset()
 
 if __name__ == "__main__":
-    qlearning = TemporalDifference("v2")
-    qlearning.train(20000)
-    qlearning.test(20000)
+    model = TemporalDifference("v2")
+    model.train(20000)
+    model.test(20000)

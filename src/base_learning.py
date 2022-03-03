@@ -5,31 +5,18 @@ import numpy as np
 from env_v1 import BlackjackEnv
 
 from env_v2 import BlackjackDoubleDownEnv
+from env_v3 import BlackjackDoubleDownSplitEnv
 
 
 class BaseLearning:
     def __init__(self, env, epsilon=0.1, gamma=0.5) -> None:
         if env == "v1":
             self.env = BlackjackEnv()
-            self.Q = np.zeros(
-                (
-                    self.env.observation_space[0].n,
-                    self.env.observation_space[1].n,
-                    self.env.observation_space[2].n,
-                    self.env.action_space.n,
-                )
-            )
         elif env == "v2":
             self.env = BlackjackDoubleDownEnv()
-            self.Q = np.zeros(
-                (
-                    self.env.observation_space[0].n,
-                    self.env.observation_space[1].n,
-                    self.env.observation_space[2].n,
-                    self.env.observation_space[3].n,
-                    self.env.action_space.n,
-                )
-            )
+        elif env == "v3":
+            self.env = BlackjackDoubleDownSplitEnv()
+        self.Q = np.zeros(tuple([dim.n for dim in self.env.observation_space] + [self.env.action_space.n]))
         self.gamma = gamma
         self.epsilon = epsilon
         self.count = self.Q.copy()
@@ -60,8 +47,7 @@ class BaseLearning:
                 action = self.greedy_policy(observation)
                 next_observation, reward, done, info = self.env.step(action)
                 observation = next_observation
-
-            total_reward += reward
+                total_reward += reward
 
             if reward == 0:
                 draw += 1
