@@ -129,76 +129,76 @@ def plot_value_function(V, title = "Value Function"):
     Z_ace = np.apply_along_axis(lambda _: V[(_[0], _[1])], 2, np.dstack([X, Y]))
     plot_surface(X, Y, Z_ace, title)
 
+if __name__=="__main__":
+    env = BlackjackDoubleDownEnv()
+    model = QLearning("v2", epsilon=0.2, gamma=0.14)
+    model.train(1000000)
 
-env = BlackjackDoubleDownEnv()
-model = QLearning("v2", epsilon=0.2, gamma=0.14)
-model.train(1000000)
+    def tablePrintResult(integer):
+        if integer ==0:
+            return "S"
 
-def tablePrintResult(integer):
-    if integer ==0:
-        return "S"
+        elif integer ==1:
+            return "H"
+        else:
+            return "DD"
 
-    elif integer ==1:
-        return "H"
-    else:
-        return "DD"
+    num_row, num_column = 17,10
+    table = np.zeros((num_row,num_column))
+    table_str_hard = np.empty_like(table, dtype=str)
 
-num_row, num_column = 17,10
-table = np.zeros((num_row,num_column))
-table_str_hard = np.empty_like(table, dtype=str)
-
-for i in range(num_row):
-    for j in range(num_column):
-        observation = (4+i,1+j,0,1)
-        table_str_hard[i,j] = tablePrintResult(model.greedy_policy(observation))
-
-
-df = pd.DataFrame(table_str_hard)
-df.to_csv("./figures/table_strategy_hard.csv")
-
-num_row_soft, num_column_soft = 9,10
-table = np.zeros((num_row_soft,num_column_soft))
-table_str_hard = np.empty_like(table, dtype=str)
-
-for i in range(num_row_soft):
-    for j in range(num_column_soft):
-        observation = (i+13,1+j,1,1)
-        table_str_hard[i,j] = tablePrintResult(model.greedy_policy(observation))
+    for i in range(num_row):
+        for j in range(num_column):
+            observation = (4+i,1+j,0,1)
+            table_str_hard[i,j] = tablePrintResult(model.greedy_policy(observation))
 
 
-df = pd.DataFrame(table_str_hard)
-df.to_csv("./figures/table_strategy_soft.csv")
+    df = pd.DataFrame(table_str_hard)
+    df.to_csv("./figures/table_strategy_hard.csv")
+
+    num_row_soft, num_column_soft = 9,10
+    table = np.zeros((num_row_soft,num_column_soft))
+    table_str_hard = np.empty_like(table, dtype=str)
+
+    for i in range(num_row_soft):
+        for j in range(num_column_soft):
+            observation = (i+13,1+j,1,1)
+            table_str_hard[i,j] = tablePrintResult(model.greedy_policy(observation))
 
 
-num_row, num_column = 17,10
-table = np.zeros((num_row,num_column))
-table_str_hard = np.empty_like(table, dtype=str)
-
-for i in range(num_row):
-    for j in range(num_column):
-        observation = (4+i,1+j,0,1)
-        table_str_hard[i,j] = tablePrintResult(basic_strategy(observation))
+    df = pd.DataFrame(table_str_hard)
+    df.to_csv("./figures/table_strategy_soft.csv")
 
 
-df = pd.DataFrame(table_str_hard)
-df.to_csv("./figures/table_basic_strategy_hard.csv")
+    num_row, num_column = 17,10
+    table = np.zeros((num_row,num_column))
+    table_str_hard = np.empty_like(table, dtype=str)
 
-num_row_soft, num_column_soft = 9,10
-table = np.zeros((num_row_soft,num_column_soft))
-table_str_hard = np.empty_like(table, dtype=str)
-
-for i in range(num_row_soft):
-    for j in range(num_column_soft):
-        observation = (i+13,1+j,1,1)
-        table_str_hard[i,j] = tablePrintResult(basic_strategy(observation))
+    for i in range(num_row):
+        for j in range(num_column):
+            observation = (4+i,1+j,0,1)
+            table_str_hard[i,j] = tablePrintResult(basic_strategy(observation))
 
 
-df = pd.DataFrame(table_str_hard)
-df.to_csv("./figures/table_basic_strategy_soft.csv")
+    df = pd.DataFrame(table_str_hard)
+    df.to_csv("./figures/table_basic_strategy_hard.csv")
 
-# V_trained_policy = mc_prediction(model.greedy_policy, env, num_episodes = 10000)
-# V_basic_policy = mc_prediction(basic_strategy, env, num_episodes = 10000)
+    num_row_soft, num_column_soft = 9,10
+    table = np.zeros((num_row_soft,num_column_soft))
+    table_str_hard = np.empty_like(table, dtype=str)
 
-# plot_value_function(V_trained_policy, title = "Trained Policy Value Function")
-# plot_value_function(V_basic_policy, title = "Basic Policy Value Function")
+    for i in range(num_row_soft):
+        for j in range(num_column_soft):
+            observation = (i+13,1+j,1,1)
+            table_str_hard[i,j] = tablePrintResult(basic_strategy(observation))
+
+
+    df = pd.DataFrame(table_str_hard)
+    df.to_csv("./figures/table_basic_strategy_soft.csv")
+
+    # V_trained_policy = mc_prediction(model.greedy_policy, env, num_episodes = 10000)
+    # V_basic_policy = mc_prediction(basic_strategy, env, num_episodes = 10000)
+
+    # plot_value_function(V_trained_policy, title = "Trained Policy Value Function")
+    # plot_value_function(V_basic_policy, title = "Basic Policy Value Function")
 
