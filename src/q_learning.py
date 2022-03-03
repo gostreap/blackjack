@@ -17,7 +17,7 @@ class QLearning(BaseLearning):
                 self.count[observation][action] += 1
                 alpha = 1 / self.count[observation][action]
 
-                maxvalue = max(self.Q[next_observation][0], self.Q[next_observation][1])
+                maxvalue = max(self.Q[next_observation])
                 self.Q[observation][action] = (1 - alpha) * self.Q[observation][action] + alpha * (
                     reward + self.gamma * maxvalue
                 )
@@ -27,6 +27,6 @@ class QLearning(BaseLearning):
 
 
 if __name__ == "__main__":
-    qlearning = QLearning("v2", epsilon=0.05, gamma=0.2)
-    qlearning.train(500000)
-    qlearning.test(20000)
+    model = QLearning("v3", epsilon=0.05, gamma=0.2)
+    model.train(500000)
+    model.test(20000)
