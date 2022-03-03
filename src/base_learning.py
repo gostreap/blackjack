@@ -1,6 +1,4 @@
 import random
-
-import gym
 import numpy as np
 from env_v1 import BlackjackEnv
 from env_v2 import BlackjackDoubleDownEnv
