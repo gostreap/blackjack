@@ -134,7 +134,6 @@ class BlackjackDoubleDownSplitEnv(gym.Env):
             )
         )
 
-        # Flag to payout 1.5 on a "natural" blackjack win, like casino rules
         # Ref: http://www.bicyclecards.com/how-to-play/blackjack/
         self.natural = natural
 
