@@ -2,12 +2,19 @@ from base_learning import BaseLearning
 
 
 class Sarsa(BaseLearning):
-    def train(self, n_episode):
+    def train(self, n_episode, plot=False, plot_interval=10000, plot_test_size=20000):
         # Training
         observation = self.env.reset()
         for i in range(n_episode):
-            if i % 50000 == 0:
+            if i % plot_interval == 0:
                 print("training, episode {} out of {}".format(i, n_episode))
+                if plot:
+                    win, draw, loss, reward = self.test(plot_test_size)
+                    self.plot["n"].append(i)
+                    self.plot["win"].append(win)
+                    self.plot["draw"].append(draw)
+                    self.plot["loss"].append(loss)
+                    self.plot["reward"].append(reward)
 
             done = False
             while not done:
@@ -28,11 +35,11 @@ class Sarsa(BaseLearning):
 
 
 if __name__ == "__main__":
-    for env in ["v1", "v2", "v3"]:
+    for env in ["v3"]:
         print("##### {} #####".format(env))
         model = Sarsa(env, epsilon=0.05, gamma=0.2)
         model.train(100000)
-        model.test(20000)
+        model.test(30000)
 
         num_state = 1
         for dim in model.env.observation_space:

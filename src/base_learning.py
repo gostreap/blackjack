@@ -20,6 +20,7 @@ class BaseLearning:
         self.gamma = gamma
         self.epsilon = epsilon
         self.count = self.Q.copy()
+        self.plot = {"n": [], "reward": [], "win":[], "draw":[], "loss":[]}
 
     def epsilon_greedy_policy(self, observation):
         # exploration
@@ -38,25 +39,52 @@ class BaseLearning:
     def test(self, n_episode):
         win, draw, loss = 0, 0, 0
         total_reward = 0
+        total_hand = n_episode
         observation = self.env.reset()
 
-        for _ in range(n_episode):
+        for i in range(n_episode):
             done = False
             reward = 0
             while not done:
                 action = self.greedy_policy(observation)
                 next_observation, reward, done, info = self.env.step(action)
                 observation = next_observation
+
+            if len(info) == 0:
                 total_reward += reward
 
-            if reward == 0:
-                draw += 1
-            elif reward > 0:
-                win += 1
+                if reward > 0:
+                    win += 1
+                elif reward < 0:
+                    loss += 1
+                else:
+                    draw += 1
             else:
-                loss += 1
+                reward0, reward1 = info["final_reward0"], info["final_reward1"]
+                if reward0 is not None:
+                    total_reward += reward0
+                    if reward0 > 0:
+                        win += 1
+                    elif reward0 < 0:
+                        loss += 1
+                    else:
+                        draw += 1
+
+                if reward1 is not None:
+                    total_hand += 1
+                    total_reward += reward1
+                    if reward1 > 0:
+                        win += 1
+                    elif reward1 < 0:
+                        loss += 1
+                    else:
+                        draw += 1
 
             observation = self.env.reset()
 
-        print("win: {} | draw: {} | loss: {}".format(win/ n_episode, draw / n_episode, loss / n_episode))
-        print("mean reward: {}".format(total_reward / n_episode))
+        assert win + draw + loss == total_hand, "Error in win, draw, loss count : {} + {} + {} = {} != {}".format(win, draw, loss, win + draw + loss, total_hand)
+
+        print("win: {} | draw: {} | loss: {}".format(win/ total_hand, draw / total_hand, loss / total_hand))
+        print("mean reward: {}".format(total_reward / total_hand))
+
+        return win / total_hand, draw / total_hand, loss / total_hand,  total_reward / total_hand

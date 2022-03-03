@@ -147,11 +147,13 @@ class BlackjackDoubleDownSplitEnv(gym.Env):
     def is_done(self):
         return self.hand0_stop and (self.hand1_stop or len(self.hand1) == 0)
 
-    def stop_hand(self, hand_num):
+    def stop_hand(self, hand_num, reward):
         if hand_num == 0:
             self.hand0_stop = True
+            self.final_reward0 = reward
         else:
             self.hand1_stop = True
+            self.final_reward1 = reward
 
     def get_hand_to_play(self, hand_num):
         if hand_num == 0:
@@ -171,14 +173,13 @@ class BlackjackDoubleDownSplitEnv(gym.Env):
             hand = self.get_hand_to_play(self.hand_to_play)
             hand.append(draw_card(self.np_random))
             if is_bust(hand):
-                self.stop_hand(self.hand_to_play)
                 reward = -1.0
+                self.stop_hand(self.hand_to_play, reward)
             else:
                 reward = 0.0
 
         elif action == 0:  # stick: play out the dealers hand, and score
             hand = self.get_hand_to_play(self.hand_to_play)
-            self.stop_hand(self.hand_to_play)
 
             while sum_hand(self.dealer) < 17:
                 self.dealer.append(draw_card(self.np_random))
@@ -187,17 +188,20 @@ class BlackjackDoubleDownSplitEnv(gym.Env):
             if self.sab and is_natural(hand) and not is_natural(self.dealer):
                 # Player automatically wins. Rules consistent with S&B
                 reward = 1.0
+                self.stop_hand(self.hand_to_play, reward)
+
             elif not self.sab and self.natural and is_natural(hand) and reward == 1.0:
                 # Natural gives extra points, but doesn't autowin. Legacy implementation
                 reward = 1.5
+                self.stop_hand(self.hand_to_play, reward)
+            self.stop_hand(self.hand_to_play, reward)
 
         elif action == 2:  # Double down
             hand = self.get_hand_to_play(self.hand_to_play)
-            self.stop_hand(self.hand_to_play)
 
             if not can_double_down(hand):
-                self.stop_hand(self.hand_to_play)
                 reward = -20
+                self.stop_hand(self.hand_to_play, reward)
 
             else:
                 hand.append(draw_card(self.np_random))
@@ -208,17 +212,25 @@ class BlackjackDoubleDownSplitEnv(gym.Env):
                 reward = cmp(score(hand), score(self.dealer))
                 if is_bust(hand):
                     reward = -2
+                    self.stop_hand(self.hand_to_play, reward)
+
                 elif self.sab and is_natural(hand) and not is_natural(self.dealer):
                     # Player automatically wins. Rules consistent with S&B
                     reward = 2.0
+                    self.stop_hand(self.hand_to_play, reward)
+
                 elif not self.sab and self.natural and is_natural(hand) and reward == 1.0:
                     # Natural gives extra points, but doesn't autowin. Legacy implementation
                     reward = 3
+                    self.stop_hand(self.hand_to_play, reward)
+                
+                self.stop_hand(self.hand_to_play, reward)
+                
 
         elif action == 3:
             if not can_split(self.hand0, self.hand1):
-                self.stop_hand(self.hand_to_play)
                 reward = -20
+                self.stop_hand(self.hand_to_play, reward)
             else:
                 self.hand0, self.hand1 = [self.hand0[0]], [self.hand0[1]]
                 self.hand0.append(draw_card(self.np_random))
@@ -226,7 +238,7 @@ class BlackjackDoubleDownSplitEnv(gym.Env):
                 reward = 0
 
         self.set_hand_to_play(self.hand_to_play)
-        return self._get_obs(), reward, self.is_done(), {}
+        return self._get_obs(), reward, self.is_done(), {"final_reward0": self.final_reward0, "final_reward1": self.final_reward1, "num_hand": 2 if self.has_split() else 1} if self.is_done() else {}
 
     def _get_obs(self):
         return (
@@ -254,6 +266,8 @@ class BlackjackDoubleDownSplitEnv(gym.Env):
         self.hand_to_play = 0
         self.hand0_stop = False
         self.hand1_stop = False
+        self.final_reward0 = None
+        self.final_reward1 = None
         if not return_info:
             return self._get_obs()
         else:
