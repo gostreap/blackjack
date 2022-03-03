@@ -27,6 +27,6 @@ class QLearning(BaseLearning):
 
 
 if __name__ == "__main__":
-    model = model("v3", epsilon=0.05, gamma=0.2)
+    model = QLearning("v3", epsilon=0.05, gamma=0.2)
     model.train(500000)
     model.test(20000)
