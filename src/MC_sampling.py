@@ -44,7 +44,6 @@ def plot_value_function(V, title = "Value Function"):
     plot_surface(X, Y, Z_noace, "{} (No Usable Ace)".format(title))
     plot_surface(X, Y, Z_ace, "{} (Usable Ace)".format(title))
 
-env = gym.make('Breakout-v0') # insert your favorite environment
 env.reset()
 img = plt.imshow(env.render(mode = 'rgb_array'))
 for _ in range(100):
