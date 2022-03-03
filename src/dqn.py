@@ -199,3 +199,18 @@ class DQNAgent:
         print("mean reward: {}".format(total_reward / total_hand))
 
         return win / total_hand, draw / total_hand, loss / total_hand,  total_reward / total_hand
+
+
+if __name__ == "__main__":
+    for env in ["v1", "v2", "v3"]:
+        print("##### {} #####".format(env))
+        dqn = DQNAgent(
+            BlackjackEnv(),
+            max_memory_size=30000,
+            batch_size=128,
+            gamma=0.2,
+            lr=0.0025,
+            epsilon=0.01
+        )
+        dqn.train(10000)
+        dqn.test(20000)
