@@ -27,3 +27,9 @@ python src/dqn.py
 ```
 
 The plot functions can be found in `plot.py` and `MC_sampling.py`.
+
+## Environment
+
+Only environments `v1`, `v2` and `v3` are used for the final results.
+
+The `v4` and `v6` environments roughly implement the ability to count cards, but we did not had time to work on it in detail.
