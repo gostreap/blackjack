@@ -2,7 +2,6 @@ from base_learning import BaseLearning
 
 
 class TemporalDifference(BaseLearning):
-
     def train(self, n_episode, plot=False, plot_interval=50000, plot_test_size=20000):
         observation = self.env.reset()
         for i in range(n_episode):
@@ -29,6 +28,7 @@ class TemporalDifference(BaseLearning):
 
             observation = self.env.reset()
 
+
 if __name__ == "__main__":
     for env in ["v1", "v2", "v3"]:
         print("##### {} #####".format(env))
@@ -38,6 +38,6 @@ if __name__ == "__main__":
 
         num_state = 1
         for dim in model.env.observation_space:
-            num_state *= dim.n 
+            num_state *= dim.n
         print("Number of state: {}".format(num_state))
         print("Number of action: {}".format(model.env.action_space.n))

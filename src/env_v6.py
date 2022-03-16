@@ -12,8 +12,12 @@ def cmp(a, b):
     return float(a > b) - float(a < b)
 
 
+# 1 = Ace, 2-10 = Number cards, Jack/Queen/King = 10
+deck = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 10, 10]
+
+
 def usable_ace(hand):  # Does this hand have a usable ace?
-    return 1 if 1 in hand and sum(hand) + 10 <= 21 else 0
+    return 1 if (1 in hand and sum(hand) + 10 <= 21) else 0
 
 
 def sum_hand(hand):  # Return current hand total
@@ -34,7 +38,18 @@ def is_natural(hand):  # Is this hand a natural blackjack?
     return sorted(hand) == [1, 10]
 
 
-class BlackjackEnvCountCard(gym.Env):
+def can_double_down(hand):
+    return 1 if len(hand) == 2 else 0
+
+
+def can_split(hand0, hand1):
+    if len(hand1) == 0 and len(hand0) == 2 and hand0[0] == hand0[1]:
+        return 1
+    else:
+        return 0
+
+
+class BlackjackDoubleDownSplitEnvCountCard(gym.Env):
     """
     Blackjack is a card game where the goal is to beat the dealer by obtaining cards
     that sum to closer to 21 (without going over 21) than the dealers cards.
@@ -58,7 +73,7 @@ class BlackjackEnvCountCard(gym.Env):
     decided by whose sum is closer to 21.
 
     ### Action Space
-    There are two actions: stick (0), and hit (1).
+    There are two actions: stick (0), hit (1), double down (2), split (3).
 
     ### Observation Space
     The observation consists of a 3-tuple containing: the player's current sum,
@@ -97,12 +112,18 @@ class BlackjackEnvCountCard(gym.Env):
     def __init__(self, natural=False, sab=False, n_deck=3, threshold=52):
         self.n_deck = n_deck
         self.threshold = threshold
-        self.action_space = spaces.Discrete(2)
+        self.action_space = spaces.Discrete(4)
         self.observation_space = spaces.Tuple(
             (
-                spaces.Discrete(32),
-                spaces.Discrete(11),
-                spaces.Discrete(2),
+                spaces.Discrete(32),  # sum of player hand 1
+                spaces.Discrete(11),  # dealer card
+                spaces.Discrete(2),  # usable ace hand 1
+                spaces.Discrete(2),  # can double down hand 1
+                spaces.Discrete(32),  # sum of player hand 2
+                spaces.Discrete(2),  # usable ace hand 2
+                spaces.Discrete(2),  # can double down hand 2
+                spaces.Discrete(2),  # can split
+                spaces.Discrete(2),  # hand to play
                 spaces.Discrete(n_deck * 4),  # number of 1 seen
                 spaces.Discrete(n_deck * 4),  # number of 2 seen
                 spaces.Discrete(n_deck * 4),  # number of 3 seen
@@ -120,7 +141,6 @@ class BlackjackEnvCountCard(gym.Env):
         self.deck = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 10, 10] * 4 * n_deck
         shuffle(self.deck)
 
-        # Flag to payout 1.5 on a "natural" blackjack win, like casino rules
         # Ref: http://www.bicyclecards.com/how-to-play/blackjack/
         self.natural = natural
 
@@ -135,31 +155,127 @@ class BlackjackEnvCountCard(gym.Env):
     def draw_hand(self):
         return [self.draw_card(), self.draw_card()]
 
+    def has_split(self):
+        return len(self.hand1) != 0
+
+    def is_done(self):
+        return self.hand0_stop and (self.hand1_stop or len(self.hand1) == 0)
+
+    def stop_hand(self, hand_num, reward):
+        if hand_num == 0:
+            self.hand0_stop = True
+            self.final_reward0 = reward
+        else:
+            self.hand1_stop = True
+            self.final_reward1 = reward
+
+    def get_hand_to_play(self, hand_num):
+        if hand_num == 0:
+            return self.hand0
+        else:
+            return self.hand1
+
+    def set_hand_to_play(self, current_hand_num):
+        if current_hand_num == 0 and not self.hand1_stop and len(self.hand1) != 0:
+            self.hand_to_play = 1
+        elif current_hand_num == 1 and not self.hand0_stop:
+            self.hand_to_play = 0
+
     def step(self, action):
         assert self.action_space.contains(action)
-        if action:  # hit: add a card to players hand and return
-            self.player.append(self.draw_card())
-            if is_bust(self.player):
-                done = True
+        if action == 1:  # hit: add a card to players hand and return
+            hand = self.get_hand_to_play(self.hand_to_play)
+            hand.append(self.draw_card())
+            if is_bust(hand):
                 reward = -1.0
+                self.stop_hand(self.hand_to_play, reward)
             else:
-                done = False
                 reward = 0.0
-        else:  # stick: play out the dealers hand, and score
-            done = True
+
+        elif action == 0:  # stick: play out the dealers hand, and score
+            hand = self.get_hand_to_play(self.hand_to_play)
+
             while sum_hand(self.dealer) < 17:
                 self.dealer.append(self.draw_card())
-            reward = cmp(score(self.player), score(self.dealer))
-            if self.sab and is_natural(self.player) and not is_natural(self.dealer):
+
+            reward = cmp(score(hand), score(self.dealer))
+            if self.sab and is_natural(hand) and not is_natural(self.dealer):
                 # Player automatically wins. Rules consistent with S&B
                 reward = 1.0
-            elif not self.sab and self.natural and is_natural(self.player) and reward == 1.0:
+                self.stop_hand(self.hand_to_play, reward)
+
+            elif not self.sab and self.natural and is_natural(hand) and reward == 1.0:
                 # Natural gives extra points, but doesn't autowin. Legacy implementation
                 reward = 1.5
-        return self._get_obs(), reward, done, {}
+                self.stop_hand(self.hand_to_play, reward)
+            self.stop_hand(self.hand_to_play, reward)
+
+        elif action == 2:  # Double down
+            hand = self.get_hand_to_play(self.hand_to_play)
+
+            if not can_double_down(hand):
+                reward = -20
+                self.stop_hand(self.hand_to_play, reward)
+
+            else:
+                hand.append(self.draw_card())
+
+                while sum_hand(self.dealer) < 17:
+                    self.dealer.append(self.draw_card())
+
+                reward = cmp(score(hand), score(self.dealer))
+                if is_bust(hand):
+                    reward = -2
+                    self.stop_hand(self.hand_to_play, reward)
+
+                elif self.sab and is_natural(hand) and not is_natural(self.dealer):
+                    # Player automatically wins. Rules consistent with S&B
+                    reward = 2.0
+                    self.stop_hand(self.hand_to_play, reward)
+
+                elif not self.sab and self.natural and is_natural(hand) and reward == 1.0:
+                    # Natural gives extra points, but doesn't autowin. Legacy implementation
+                    reward = 3
+                    self.stop_hand(self.hand_to_play, reward)
+
+                self.stop_hand(self.hand_to_play, reward)
+
+        elif action == 3:
+            if not can_split(self.hand0, self.hand1):
+                reward = -20
+                self.stop_hand(self.hand_to_play, reward)
+            else:
+                self.hand0, self.hand1 = [self.hand0[0]], [self.hand0[1]]
+                self.hand0.append(self.draw_card())
+                self.hand1.append(self.draw_card())
+                reward = 0
+
+        self.set_hand_to_play(self.hand_to_play)
+        return (
+            self._get_obs(),
+            reward,
+            self.is_done(),
+            {
+                "final_reward0": self.final_reward0,
+                "final_reward1": self.final_reward1,
+                "num_hand": 2 if self.has_split() else 1,
+            }
+            if self.is_done()
+            else {},
+        )
 
     def _get_obs(self):
-        return [sum_hand(self.player), self.dealer[0], usable_ace(self.player)] + list(self.seen)
+        return [
+            sum_hand(self.hand0),
+            self.dealer[0],
+            usable_ace(self.hand0),
+            can_double_down(self.hand0),
+            sum_hand(self.hand1),
+            usable_ace(self.hand1),
+            can_double_down(self.hand1),
+            can_split(self.hand0, self.hand1),
+            self.hand_to_play,
+        ] + list(self.seen)
 
     def reset_deck(self):
         self.seen = np.zeros(10)
@@ -174,9 +290,16 @@ class BlackjackEnvCountCard(gym.Env):
     ):
         super().reset(seed=seed)
         self.dealer = self.draw_hand()
-        self.player = self.draw_hand()
+        self.hand0 = self.draw_hand()
+        self.hand1 = []
+        self.hand_to_play = 0
+        self.hand0_stop = False
+        self.hand1_stop = False
+        self.final_reward0 = None
+        self.final_reward1 = None
         if np.sum(self.seen) > self.threshold:
             self.reset_deck()
+
         if not return_info:
             return self._get_obs()
         else:
@@ -199,9 +322,6 @@ class BlackjackEnvCountCard(gym.Env):
             else:
                 pygame.font.init()
                 self.screen = pygame.Surface((screen_width, screen_height))
-
-        if not hasattr(self, "clock"):
-            self.clock = pygame.time.Clock()
 
         self.screen.fill(bg_color)
 
@@ -276,6 +396,5 @@ class BlackjackEnvCountCard(gym.Env):
             )
         if mode == "human":
             pygame.display.update()
-            self.clock.tick(self.metadata["render_fps"])
         else:
             return np.transpose(np.array(pygame.surfarray.pixels3d(self.screen)), axes=(1, 0, 2))

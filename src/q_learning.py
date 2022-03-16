@@ -16,7 +16,6 @@ class QLearning(BaseLearning):
                     self.plot["loss"].append(loss)
                     self.plot["reward"].append(reward)
 
-
             done = False
             while not done:
                 action = self.epsilon_greedy_policy(observation)
@@ -43,7 +42,6 @@ if __name__ == "__main__":
 
         num_state = 1
         for dim in model.env.observation_space:
-            num_state *= dim.n 
+            num_state *= dim.n
         print("Number of state: {}".format(num_state))
         print("Number of action: {}".format(model.env.action_space.n))
-

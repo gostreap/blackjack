@@ -1,12 +1,10 @@
-from typing import Optional
 import os
-
-import numpy as np
-import pygame
+from typing import Optional
 
 import gym
+import numpy as np
+import pygame
 from gym import spaces
-from gym.utils import seeding
 
 
 def cmp(a, b):
@@ -142,41 +140,30 @@ class BlackjackDoubleDownEnv(gym.Env):
             if self.sab and is_natural(self.player) and not is_natural(self.dealer):
                 # Player automatically wins. Rules consistent with S&B
                 reward = 1.0
-            elif (
-                not self.sab
-                and self.natural
-                and is_natural(self.player)
-                and reward == 1.0
-            ):
+            elif not self.sab and self.natural and is_natural(self.player) and reward == 1.0:
                 # Natural gives extra points, but doesn't autowin. Legacy implementation
                 reward = 1.5
 
-        elif action == 2: # Double down
+        elif action == 2:  # Double down
             done = True
             if not can_double_down(self.player):
                 reward = -20
-            
+
             else:
                 self.player.append(draw_card(self.np_random))
-                
+
                 while sum_hand(self.dealer) < 17:
                     self.dealer.append(draw_card(self.np_random))
-                
+
                 reward = cmp(score(self.player), score(self.dealer))
                 if is_bust(self.player):
                     reward = -2
                 elif self.sab and is_natural(self.player) and not is_natural(self.dealer):
                     # Player automatically wins. Rules consistent with S&B
                     reward = 2.0
-                elif (
-                    not self.sab
-                    and self.natural
-                    and is_natural(self.player)
-                    and reward == 1.0
-                ):
+                elif not self.sab and self.natural and is_natural(self.player) and reward == 1.0:
                     # Natural gives extra points, but doesn't autowin. Legacy implementation
                     reward = 3
-            
 
         return self._get_obs(), reward, done, {}
 
@@ -227,12 +214,8 @@ class BlackjackDoubleDownEnv(gym.Env):
             font = pygame.font.Font(os.path.join(cwd, path), size)
             return font
 
-        small_font = get_font(
-            os.path.join("font", "Minecraft.ttf"), screen_height // 15
-        )
-        dealer_text = small_font.render(
-            "Dealer: " + str(dealer_card_value), True, white
-        )
+        small_font = get_font(os.path.join("font", "Minecraft.ttf"), screen_height // 15)
+        dealer_text = small_font.render("Dealer: " + str(dealer_card_value), True, white)
         dealer_text_rect = self.screen.blit(dealer_text, (spacing, spacing))
 
         suits = ["C", "D", "H", "S"]
@@ -249,9 +232,7 @@ class BlackjackDoubleDownEnv(gym.Env):
             return pygame.transform.scale(card_img, (card_img_width, card_img_height))
 
         dealer_card_img = scale_card_img(
-            get_image(
-                os.path.join("img", dealer_card_suit + dealer_card_value_str + ".png")
-            )
+            get_image(os.path.join("img", dealer_card_suit + dealer_card_value_str + ".png"))
         )
         dealer_card_rect = self.screen.blit(
             dealer_card_img,
@@ -271,9 +252,7 @@ class BlackjackDoubleDownEnv(gym.Env):
         )
 
         player_text = small_font.render("Player", True, white)
-        player_text_rect = self.screen.blit(
-            player_text, (spacing, dealer_card_rect.bottom + 1.5 * spacing)
-        )
+        player_text_rect = self.screen.blit(player_text, (spacing, dealer_card_rect.bottom + 1.5 * spacing))
 
         large_font = get_font(os.path.join("font", "Minecraft.ttf"), screen_height // 6)
         player_sum_text = large_font.render(str(player_sum), True, white)
@@ -297,6 +276,4 @@ class BlackjackDoubleDownEnv(gym.Env):
         if mode == "human":
             pygame.display.update()
         else:
-            return np.transpose(
-                np.array(pygame.surfarray.pixels3d(self.screen)), axes=(1, 0, 2)
-            )
+            return np.transpose(np.array(pygame.surfarray.pixels3d(self.screen)), axes=(1, 0, 2))

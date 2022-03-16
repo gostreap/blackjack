@@ -13,6 +13,7 @@ class BaseLearning:
             self.env = BlackjackDoubleDownEnv()
         elif env == "v3":
             self.env = BlackjackDoubleDownSplitEnv()
+
         self.Q = np.random.uniform(-1, 1, size=tuple([dim.n for dim in self.env.observation_space] + [self.env.action_space.n]))
         self.gamma = gamma
         self.epsilon = epsilon

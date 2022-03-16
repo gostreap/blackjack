@@ -1,12 +1,10 @@
-from typing import Optional
 import os
-
-import numpy as np
-import pygame
+from typing import Optional
 
 import gym
+import numpy as np
+import pygame
 from gym import spaces
-from gym.utils import seeding
 
 
 def cmp(a, b):
@@ -122,11 +120,11 @@ class BlackjackDoubleDownSplitEnv(gym.Env):
         self.action_space = spaces.Discrete(4)
         self.observation_space = spaces.Tuple(
             (
-                spaces.Discrete(32), # sum of player hand 1
-                spaces.Discrete(11), # dealer card
+                spaces.Discrete(32),  # sum of player hand 1
+                spaces.Discrete(11),  # dealer card
                 spaces.Discrete(2),  # usable ace hand 1
                 spaces.Discrete(2),  # can double down hand 1
-                spaces.Discrete(32), # sum of player hand 2
+                spaces.Discrete(32),  # sum of player hand 2
                 spaces.Discrete(2),  # usable ace hand 2
                 spaces.Discrete(2),  # can double down hand 2
                 spaces.Discrete(2),  # can split
@@ -222,9 +220,8 @@ class BlackjackDoubleDownSplitEnv(gym.Env):
                     # Natural gives extra points, but doesn't autowin. Legacy implementation
                     reward = 3
                     self.stop_hand(self.hand_to_play, reward)
-                
+
                 self.stop_hand(self.hand_to_play, reward)
-                
 
         elif action == 3:
             if not can_split(self.hand0, self.hand1):
@@ -237,7 +234,18 @@ class BlackjackDoubleDownSplitEnv(gym.Env):
                 reward = 0
 
         self.set_hand_to_play(self.hand_to_play)
-        return self._get_obs(), reward, self.is_done(), {"final_reward0": self.final_reward0, "final_reward1": self.final_reward1, "num_hand": 2 if self.has_split() else 1} if self.is_done() else {}
+        return (
+            self._get_obs(),
+            reward,
+            self.is_done(),
+            {
+                "final_reward0": self.final_reward0,
+                "final_reward1": self.final_reward1,
+                "num_hand": 2 if self.has_split() else 1,
+            }
+            if self.is_done()
+            else {},
+        )
 
     def _get_obs(self):
         return (

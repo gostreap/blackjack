@@ -3,7 +3,6 @@ from MC_sampling import basic_strategy
 
 
 class BasicPolicy(BaseLearning):
-
     def greedy_policy(self, observation):
         return basic_strategy(observation)
 
@@ -19,5 +18,3 @@ class BasicPolicy(BaseLearning):
                     self.plot["draw"].append(draw)
                     self.plot["loss"].append(loss)
                     self.plot["reward"].append(reward)
-
-            
