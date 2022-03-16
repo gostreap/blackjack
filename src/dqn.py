@@ -8,7 +8,9 @@ from torch.utils.data import TensorDataset, DataLoader
 from base_learning import BaseLearning
 import matplotlib.pyplot as plt
 from env_v1 import BlackjackEnv
+from env_v2 import BlackjackDoubleDownEnv
 from env_v3 import BlackjackDoubleDownSplitEnv
+from env_v4 import BlackjackDoubleDownSplitEnvCountCard
 from tqdm import tqdm
 
 # Creation du modèle de DL
@@ -202,10 +204,11 @@ class DQNAgent:
 
 
 if __name__ == "__main__":
-    for env in ["v1", "v2", "v3"]:
+    # BlackjackEnv(), BlackjackDoubleDownEnv(), BlackjackDoubleDownSplitEnv(),
+    for env in [BlackjackDoubleDownSplitEnv()]:
         print("##### {} #####".format(env))
         dqn = DQNAgent(
-            BlackjackEnv(),
+            env,
             max_memory_size=30000,
             batch_size=128,
             gamma=0.2,
